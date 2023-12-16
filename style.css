@@ -1,0 +1,61 @@
+*, ::before, ::after {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #ccc;
+}
+
+.centered {
+    margin: 2rem auto;
+    max-width: 600px;
+    min-height: 200px;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 2px;
+    box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+.centered h3 {
+    text-align: center;
+    margin: 1.2rem auto;
+}
+
+.form-elements {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+}
+
+.form-elements input, .btn-submit {
+    padding: 8px;
+}
+
+#item {
+    border-radius: 8px 0 0 8px;
+}
+
+.btn-submit {
+    border: none;
+    border-radius: 0 8px 8px 0;
+}
+
+.grocery-item {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem auto;
+}
+
+.btn-delete {
+    color: rgba(255, 0, 0, 0.6);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-edit {
+    color: rgba(0, 255, 0, 0.6);
+    cursor: pointer;
+    border: none;
+}

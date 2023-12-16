@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Grocery list</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="fontawesome/css/all.min.css">
+    </head>
+    <body>
+        <section class="centered">
+            <h3>Grocery list</h3>
+            <form class="grocery">
+                <div class="form-elements">
+                    <input type="text" id="item" placeholder="Bread">
+                <button type="submit" class="btn-submit">Submit</button>
+                </div>
+            </form>
+            <div class="gorcery-container">
+                <div class="grocery-list">
+                    <article class="grocery-item">
+                        <p class="item-title">Bananas</p>
+                        <div class="btn-container">
+                            <button class="btn-edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </article>
+                </div>
+                <button type="button" class="btn-clear">Clear list</button>
+            </div>
+        </section>
+    </body>
+</html>
