@@ -4,6 +4,7 @@ const submitButton = document.querySelector('.btn-submit')
 const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
 const clearButton = document.querySelector('.btn-clear')
+const result = document.querySelector('.result')
 let editing = false
 
 form.addEventListener('submit', addItem)
@@ -21,42 +22,37 @@ newItem.addEventListener('input', () => {
 function addItem(e) {
     e.preventDefault()
     const value = newItem.value
-    if (value !== '') {
-        if (editing) {
-            console.log('Editing a value')
-        }
-        else {
-            const id = new Date().getTime().toString()
-            console.log('Adding a new item')
-            const article = createArticle(value)
-            list.appendChild(article)
-        }
+    if (editing) {
+        console.log('Editing a value')
+    }
+    else {
+        const id = new Date().getTime().toString()
+        const article = createArticle(value)
+        list.appendChild(article)
+        displayMessage(`${value} successfully added to the list`, 'success')
     }
 }
 
 function createArticle(name) {
     const article = document.createElement('article')
     article.classList.add('grocery-item')
-    const p = document.createElement('p')
-    p.classList.add('item-title')
-    p.innerText = name
-    const div = document.createElement('div')
-    div.classList.add('btn-container')
-    const btnEdit = document.createElement('button')
-    btnEdit.classList.add('btn-edit')
-    const iEdit = document.createElement('i')
-    iEdit.classList.add('fas')
-    iEdit.classList.add('fa-edit')
-    btnEdit.appendChild(iEdit)
-    const btnDelete = document.createElement('button')
-    btnDelete.classList.add('btn-delete')
-    const iDelete = document.createElement('i')
-    iDelete.classList.add('fas')
-    iDelete.classList.add('fa-trash')
-    btnDelete.appendChild(iDelete)
-    div.appendChild(btnEdit)
-    div.appendChild(btnDelete)
-    article.appendChild(p)
-    article.appendChild(div)
+    article.innerHTML = `<p class="item-title">${name}</p>
+    <div class="btn-container">
+        <button class="btn-edit">
+            <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn-delete">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>`
     return article
+}
+
+function displayMessage(message, level) {
+    result.innerText = message
+    result.classList.add(`result-${level}`)
+    setTimeout(() => {
+        result.innerText = ''
+        result.classList.remove(`result-${level}`)
+    }, 2000)
 }
