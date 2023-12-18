@@ -1,10 +1,10 @@
 const form = document.querySelector('.grocery')
 const newItem = document.getElementById('item')
-const submitButton = document.querySelector('.btn-submit')
-const itemContainer = document.querySelector('.grocery-container')
+const submitButton = document.querySelector('.btn-add')
+// const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
-const clearButton = document.querySelector('.btn-clear')
-const result = document.querySelector('.result')
+// const clearButton = document.querySelector('.btn-clear')
+
 let editing = false
 
 form.addEventListener('submit', addItem)
@@ -29,6 +29,10 @@ function addItem(e) {
         const id = new Date().getTime().toString()
         const article = createArticle(value)
         list.appendChild(article)
+        const delButton = article.querySelector('.btn-delete')
+        const editButton = article.querySelector('.btn-edit')
+        delButton.onclick = deleteItem
+        editButton.onclick = editItem
         displayMessage(`${value} successfully added to the list`, 'success')
     }
 }
@@ -49,10 +53,22 @@ function createArticle(name) {
 }
 
 function displayMessage(message, level) {
-    result.innerText = message
-    result.classList.add(`result-${level}`)
+    const toast = document.createElement('div')
+    toast.classList.add('toast')
+    toast.innerText = message
+    toast.classList.add(level)
+    document.body.appendChild(toast)
     setTimeout(() => {
-        result.innerText = ''
-        result.classList.remove(`result-${level}`)
+        document.body.removeChild(toast)
     }, 2000)
+}
+
+function deleteItem(e) {
+    const item = e.currentTarget.parentElement.parentElement
+    list.removeChild(item)
+}
+
+function editItem(e) {
+    const item = e.currentTarget.parentElement.parentElement
+    // list.removeChild(item)
 }

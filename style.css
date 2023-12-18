@@ -20,7 +20,7 @@ body {
 
 .centered h3 {
     text-align: center;
-    margin: 1.2rem auto;
+    margin-bottom: 1.5rem;
 }
 
 .form-elements {
@@ -66,20 +66,24 @@ body {
     border: none;
 }
 
-.result {
-    display: block;
+.success {
+    background-color: #198754;
+    color: rgba(255, 255, 255, 0.8)
+}
+
+.failure {
+    background-color: #d9534f;
+    color: rgba(255, 255, 255, 0.8)
+}
+
+.toast {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     height: 2rem;
     text-align: center;
     width: 300px;
-    margin: 1rem auto;
     line-height: 2rem;
     border-radius: 4px;
-}
-
-.result-success {
-    background-color: rgba(97, 217, 80, 0.5);
-}
-
-.result-failure {
-    background-color: rgba(217, 97, 80, 0.5);
 }
