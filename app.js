@@ -5,10 +5,13 @@ const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
 let elementEditing;
 const appKeyName = 'MyGroceryApp'
+const clearButton = document.querySelector('.btn-clear')
 
 let editing = false
 
 form.addEventListener('submit', addItem)
+
+clearButton.onclick = clear
 
 init()
 
@@ -21,9 +24,15 @@ function init() {
         const data = JSON.parse(dict)
         for (const [key, value] of Object.entries(data)) {
             const markup = createArticle(value, key)
+            const delButton = markup.querySelector('.btn-delete')
+            const editButton = markup.querySelector('.btn-edit')
+            delButton.onclick = deleteItem
+            editButton.onclick = editItem
             list.appendChild(markup)
         }
-        itemContainer.classList.add('show-groceries')
+        if (Object.keys(data).length > 0) {
+            itemContainer.classList.add('show-groceries')
+        }
     }
 }
 
@@ -96,10 +105,30 @@ function displayMessage(message, level) {
     }, 2000)
 }
 
-function deleteItem(e) {
+async function deleteItem(e) {
     const item = e.currentTarget.parentElement.parentElement
     const value = item.querySelector('p').innerText
-    showModal(`Are you sure you want to delete ${value}`, item)    
+    try {
+        const choice = await showModal(`Are you sure you want to delete ${value}`)    
+        if (choice){
+            list.removeChild(item)
+            const id = item.getAttribute('data-id')
+            const data = JSON.parse(localStorage.getItem(appKeyName))
+            delete data[id]
+            localStorage.setItem(appKeyName, JSON.stringify(data))
+            const value = item.querySelector('p').innerText
+            displayMessage(`Item ${value} removed.`, 'danger')
+            if (list.children.length === 0) {
+                itemContainer.classList.remove('show-groceries')
+            }
+        }
+        else {
+
+        }
+    }
+    catch(error) {
+        console.log(error)
+    }
 }
 
 function editItem(e) {
@@ -114,35 +143,24 @@ function editItem(e) {
     editing = true
 }
 
-function showModal(message, item) {
-    function handleYes() {
-        list.removeChild(item)
-        closeModal(true)
-    }
-
-    function handleNo() {
-        closeModal(false)
-    }
-
-    function closeModal(done) {
-        document.querySelector('.modal').remove()
-        const value = item.querySelector('p').innerText
-        if (done) {
-            displayMessage(`Item ${value} removed.`, 'danger')
-        }
-        if (list.children.length === 0) {
-            itemContainer.classList.remove('show-groceries')
-        }
-        postModal()
-    }
-
-    preModal()
-    const div = document.createElement('div')
-    div.classList.add('modal')
-    div.innerHTML = `<p>${message}</p><div class="btn-row"><button id="yes">Yes</button><button id="no">No</button></div>`
-    document.body.appendChild(div)
-    document.getElementById('yes').addEventListener('click', handleYes)
-    document.getElementById('no').addEventListener('click', handleNo)
+function showModal(message) {
+    return new Promise( (resolve) => {
+        preModal()
+        const div = document.createElement('div')
+        div.classList.add('modal')
+        div.innerHTML = `<p>${message}</p><div class="btn-row"><button id="yes">Yes</button><button id="no">No</button></div>`
+        document.body.appendChild(div)
+        document.getElementById('yes').addEventListener('click', function() {
+            document.querySelector('.modal').remove()
+            postModal()
+            resolve(true)
+        })
+        document.getElementById('no').addEventListener('click', function() {
+            document.querySelector('.modal').remove()
+            postModal()
+            resolve(false)
+        })
+    })
 }
 
 function preModal() {
@@ -179,6 +197,20 @@ function postModal() {
     clearButton.disabled = false
 }
 
-function reset() {
+async function clear() {
+    try {
+        const choice = await showModal('Are you sure you want to delete all items?')
+        if (choice){
+            localStorage.setItem(appKeyName, JSON.stringify({}))
+            list.innerHTML = ''
+            displayMessage('All items removed from list.', 'danger')
+            itemContainer.classList.remove('show-groceries')
+        }
+        else {
 
+        }
+    }
+    catch(error) {
+        console.log(error)
+    }
 }
