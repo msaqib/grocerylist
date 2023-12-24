@@ -4,13 +4,30 @@ const submitButton = document.querySelector('.btn-add')
 const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
 let elementEditing;
+const appKeyName = 'MyGroceryApp'
 
 let editing = false
 
 form.addEventListener('submit', addItem)
 
+init()
+
+function init() {
+    const dict = localStorage.getItem(appKeyName)
+    if (!dict) {
+        localStorage.setItem(appKeyName, JSON.stringify({}))
+    }
+    else {
+        const data = JSON.parse(dict)
+        for (const [key, value] of Object.entries(data)) {
+            const markup = createArticle(value, key)
+            list.appendChild(markup)
+        }
+        itemContainer.classList.add('show-groceries')
+    }
+}
+
 newItem.addEventListener('input', () => {
-    console.log('changed')
     if (newItem.value === '') {
         submitButton.disabled = true
     }
@@ -20,12 +37,15 @@ newItem.addEventListener('input', () => {
 })
 
 function addItem(e) {
-    console.log('Add item called')
     e.preventDefault()
     const value = newItem.value
+    let dict = JSON.parse(localStorage.getItem(appKeyName))
     if (editing) {
+        const id = elementEditing.getAttribute('data-id')
         const pElement = elementEditing.querySelector('p')
         pElement.innerText = newItem.value
+        dict[id] = newItem.value
+        localStorage.setItem(appKeyName, JSON.stringify(dict))
         postModal()
         submitButton.innerText = 'Add'
         newItem.value = ''
@@ -33,14 +53,14 @@ function addItem(e) {
     }
     else {
         const id = new Date().getTime().toString()
-        const article = createArticle(value)
+        const article = createArticle(value, id)
         list.appendChild(article)
         const delButton = article.querySelector('.btn-delete')
         const editButton = article.querySelector('.btn-edit')
         delButton.onclick = deleteItem
         editButton.onclick = editItem
-        const now = new Date();
-        localStorage.setItem(now.getTime(), value)
+        dict[id] = value
+        localStorage.setItem(appKeyName, JSON.stringify(dict))
         displayMessage(`${value} successfully added to the list`, 'success')
     }
     if (list.children.length > 0) {
@@ -49,8 +69,9 @@ function addItem(e) {
     newItem.value = ''
 }
 
-function createArticle(name) {
+function createArticle(name, id) {
     const article = document.createElement('article')
+    article.setAttribute('data-id', id)
     article.classList.add('grocery-item')
     article.innerHTML = `<p class="item-title">${name}</p>
     <div class="btn-container">
