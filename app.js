@@ -3,7 +3,7 @@ const newItem = document.getElementById('item')
 const submitButton = document.querySelector('.btn-add')
 const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
-// const clearButton = document.querySelector('.btn-clear')
+let elementEditing;
 
 let editing = false
 
@@ -20,10 +20,16 @@ newItem.addEventListener('input', () => {
 })
 
 function addItem(e) {
+    console.log('Add item called')
     e.preventDefault()
     const value = newItem.value
     if (editing) {
-        console.log('Editing a value')
+        const pElement = elementEditing.querySelector('p')
+        pElement.innerText = newItem.value
+        postModal()
+        submitButton.innerText = 'Add'
+        newItem.value = ''
+        editing = false
     }
     else {
         const id = new Date().getTime().toString()
@@ -33,6 +39,8 @@ function addItem(e) {
         const editButton = article.querySelector('.btn-edit')
         delButton.onclick = deleteItem
         editButton.onclick = editItem
+        const now = new Date();
+        localStorage.setItem(now.getTime(), value)
         displayMessage(`${value} successfully added to the list`, 'success')
     }
     if (list.children.length > 0) {
@@ -70,39 +78,47 @@ function displayMessage(message, level) {
 function deleteItem(e) {
     const item = e.currentTarget.parentElement.parentElement
     const value = item.querySelector('p').innerText
-    preModal()
     showModal(`Are you sure you want to delete ${value}`, item)    
 }
 
 function editItem(e) {
-    const item = e.currentTarget.parentElement.parentElement
-    // list.removeChild(item)
+    preModal()
+    elementEditing = e.currentTarget.parentElement.parentElement
+    newItem.disabled = false
+    submitButton.disabled = false
+    const pElement = elementEditing.querySelector('p')
+    newItem.value = pElement.innerText
+    newItem.focus()
+    submitButton.innerText = 'Save'
+    editing = true
 }
 
 function showModal(message, item) {
     function handleYes() {
         list.removeChild(item)
-        closeModal()
+        closeModal(true)
     }
 
     function handleNo() {
-        closeModal()
+        closeModal(false)
     }
 
-    function closeModal() {
+    function closeModal(done) {
         document.querySelector('.modal').remove()
-        postModal()
         const value = item.querySelector('p').innerText
-        displayMessage(`Item ${value} removed.`, 'danger')
+        if (done) {
+            displayMessage(`Item ${value} removed.`, 'danger')
+        }
         if (list.children.length === 0) {
             itemContainer.classList.remove('show-groceries')
         }
+        postModal()
     }
 
+    preModal()
     const div = document.createElement('div')
     div.classList.add('modal')
     div.innerHTML = `<p>${message}</p><div class="btn-row"><button id="yes">Yes</button><button id="no">No</button></div>`
-    div.classList.add('.toast')
     document.body.appendChild(div)
     document.getElementById('yes').addEventListener('click', handleYes)
     document.getElementById('no').addEventListener('click', handleNo)
@@ -113,8 +129,14 @@ function preModal() {
     newItem.disabled = true
     const editButtons = document.querySelectorAll('.btn-edit')
     const deleteButtons = document.querySelectorAll('.btn-delete')
-    editButtons.forEach( btn => btn.onclick = null)
-    deleteButtons.forEach( btn => btn.onclick = null)
+    editButtons.forEach( btn => {
+        btn.onclick = null
+        btn.style.cursor = 'auto'
+    })
+    deleteButtons.forEach( btn => {
+        btn.onclick = null
+        btn.style.cursor = 'auto'
+    })
     const clearButton = document.querySelector('.btn-clear')
     clearButton.disabled = true
 }
@@ -124,8 +146,14 @@ function postModal() {
     newItem.disabled = false
     const editButtons = document.querySelectorAll('.btn-edit')
     const deleteButtons = document.querySelectorAll('.btn-delete')
-    editButtons.forEach( btn => btn.onclick = editItem)
-    deleteButtons.forEach( btn => btn.onclick = deleteItem)
+    editButtons.forEach( btn => {
+        btn.onclick = editItem
+        btn.style.cursor = 'pointer'
+    })
+    deleteButtons.forEach( btn => {
+        btn.onclick = deleteItem
+        btn.style.cursor = 'pointer'
+    })
     const clearButton = document.querySelector('.btn-clear')
     clearButton.disabled = false
 }
