@@ -4,10 +4,14 @@ const submitButton = document.querySelector('.btn-add')
 const itemContainer = document.querySelector('.grocery-container')
 const list = document.querySelector('.grocery-list')
 let elementEditing;
-const appKeyName = 'MyGroceryApp'
+const dbName = 'MyGroceryApp'
+const dbVersion = 3
+const osName = 'groceries'
 const clearButton = document.querySelector('.btn-clear')
 
 let editing = false
+
+let db;
 
 form.addEventListener('submit', addItem)
 
@@ -15,25 +19,50 @@ clearButton.onclick = clear
 
 init()
 
+function displayList() {
+    const tx = db.transaction(osName, "readonly");
+    const store = tx.objectStore(osName)
+
+    store.openCursor().onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+            const article = createArticle(cursor.value, cursor.key)
+            list.appendChild(article)
+            cursor.continue();
+            // const delButton = article.querySelector('.btn-delete')
+            // const editButton = article.querySelector('.btn-edit')
+            // delButton.onclick = deleteItem
+            // editButton.onclick = editItem
+        } else {
+            console.log("No more entries!");
+            if (list.children.length > 0) {
+                itemContainer.classList.add('show-groceries')
+            }
+        }
+    };
+}
+
 function init() {
-    const dict = localStorage.getItem(appKeyName)
-    if (!dict) {
-        localStorage.setItem(appKeyName, JSON.stringify({}))
+    
+    function openDB() {
+        const request = indexedDB.open(dbName, dbVersion);
+    
+        request.onerror = (event) => {
+            console.error(`Database error: ${event.target.errorCode}`);
+        };
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            console.log(db)
+            displayList()
+        };
+
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+        
+            const objectStore = db.createObjectStore(osName, { autoIncrement: true });
+        };
     }
-    else {
-        const data = JSON.parse(dict)
-        for (const [key, value] of Object.entries(data)) {
-            const markup = createArticle(value, key)
-            const delButton = markup.querySelector('.btn-delete')
-            const editButton = markup.querySelector('.btn-edit')
-            delButton.onclick = deleteItem
-            editButton.onclick = editItem
-            list.appendChild(markup)
-        }
-        if (Object.keys(data).length > 0) {
-            itemContainer.classList.add('show-groceries')
-        }
-    }
+    openDB()
 }
 
 newItem.addEventListener('input', () => {
@@ -45,37 +74,110 @@ newItem.addEventListener('input', () => {
     }
 })
 
+function storeItem(value) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([osName], "readwrite");
+        const objectStore = transaction.objectStore(osName);
+
+        const addRequest = objectStore.add(value);
+
+        addRequest.onsuccess = function(event) {
+            const key = event.target.result;
+            resolve(key)
+        };
+
+        addRequest.onerror = function(event) {
+            reject(`Error storing data: ${event.target.error.message}`)
+        }
+
+        transaction.oncomplete = function(event) {
+            console.log("Transaction completed.");
+        };
+    })
+}
+
+function updateItem(id, newValue) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([osName], "readwrite");
+        const objectStore = transaction.objectStore(osName);
+        const request = objectStore.get(id);
+        request.onerror = (event) => {
+            reject(event.target.error.message)
+        };
+        request.onsuccess = (event) => {
+            // Get the old value that we want to update
+            let data = event.target.result;
+            data = newValue;
+            // Put this updated object back into the database.
+            const requestUpdate = objectStore.put(data);
+            requestUpdate.onerror = (event) => {
+                reject(event.target.error.message)
+            };
+            requestUpdate.onsuccess = (event) => {
+                resolve('Item updated')
+            };
+        };
+    })
+}
+
+function removeItem(key) {
+    return new Promise ( (resolve, reject) => {
+        const request = db
+        .transaction([osName], "readwrite")
+        .objectStore(osName)
+        .delete(parseInt(key));
+        request.onsuccess = (event) => {
+            resolve('Item deleted')
+        };
+        request.onerror = (event) => {
+            reject(event.target.error.message)
+        }
+    })
+}
+
 function addItem(e) {
     e.preventDefault()
     const value = newItem.value
-    let dict = JSON.parse(localStorage.getItem(appKeyName))
+    // let dict = JSON.parse(localStorage.getItem(appKeyName))
     if (editing) {
         const id = elementEditing.getAttribute('data-id')
         const pElement = elementEditing.querySelector('p')
         pElement.innerText = newItem.value
-        dict[id] = newItem.value
-        localStorage.setItem(appKeyName, JSON.stringify(dict))
+        updateItem(id, newItem.value)
+            .then( result => {
+                displayMessage('Item successfully updated', 'success')
+                if (list.children.length > 0) {
+                    itemContainer.classList.add('show-groceries')
+                }
+                newItem.value = ''
+            })
+            .catch( error => {
+                displayMessage('Item could not be updated', 'danger')
+            })
         postModal()
         submitButton.innerText = 'Add'
         newItem.value = ''
         editing = false
     }
     else {
-        const id = new Date().getTime().toString()
-        const article = createArticle(value, id)
-        list.appendChild(article)
-        const delButton = article.querySelector('.btn-delete')
-        const editButton = article.querySelector('.btn-edit')
-        delButton.onclick = deleteItem
-        editButton.onclick = editItem
-        dict[id] = value
-        localStorage.setItem(appKeyName, JSON.stringify(dict))
-        displayMessage(`${value} successfully added to the list`, 'success')
+        storeItem(value)
+            .then( key => {
+                const article = createArticle(value, key)
+                list.appendChild(article)
+                // const delButton = article.querySelector('.btn-delete')
+                // const editButton = article.querySelector('.btn-edit')
+                // delButton.onclick = deleteItem
+                // editButton.onclick = editItem
+                displayMessage(`${value} successfully added to the list`, 'success')
+                if (list.children.length > 0) {
+                    itemContainer.classList.add('show-groceries')
+                }
+                newItem.value = ''
+            })
+            .catch( error => {
+                console.log(error)
+            })
     }
-    if (list.children.length > 0) {
-        itemContainer.classList.add('show-groceries')
-    }
-    newItem.value = ''
 }
 
 function createArticle(name, id) {
@@ -91,6 +193,10 @@ function createArticle(name, id) {
             <i class="fas fa-trash"></i>
         </button>
     </div>`
+    const delButton = article.querySelector('.btn-delete')
+    const editButton = article.querySelector('.btn-edit')
+    delButton.onclick = deleteItem
+    editButton.onclick = editItem
     return article
 }
 
@@ -113,14 +219,17 @@ async function deleteItem(e) {
         if (choice){
             list.removeChild(item)
             const id = item.getAttribute('data-id')
-            const data = JSON.parse(localStorage.getItem(appKeyName))
-            delete data[id]
-            localStorage.setItem(appKeyName, JSON.stringify(data))
-            const value = item.querySelector('p').innerText
-            displayMessage(`Item ${value} removed.`, 'danger')
-            if (list.children.length === 0) {
-                itemContainer.classList.remove('show-groceries')
-            }
+            removeItem(id)
+                .then( result => {
+                    console.log(result)
+                    displayMessage(`Item ${value} removed.`, 'danger')
+                    if (list.children.length === 0) {
+                        itemContainer.classList.remove('show-groceries')
+                    }
+                })
+                .catch(error => {
+                    displayMessage(error, 'danger')
+                })
         }
         else {
 
@@ -201,7 +310,7 @@ async function clear() {
     try {
         const choice = await showModal('Are you sure you want to delete all items?')
         if (choice){
-            localStorage.setItem(appKeyName, JSON.stringify({}))
+            //localStorage.setItem(appKeyName, JSON.stringify({}))
             list.innerHTML = ''
             displayMessage('All items removed from list.', 'danger')
             itemContainer.classList.remove('show-groceries')
