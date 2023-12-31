@@ -39,26 +39,20 @@ function displayList() {
 }
 
 function init() {
-    
-    function openDB() {
-        const request = indexedDB.open(dbName, dbVersion);
-    
-        request.onerror = (event) => {
-            console.error(`Database error: ${event.target.errorCode}`);
-        };
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            console.log(db)
-            displayList()
-        };
+    const request = indexedDB.open(dbName, dbVersion);
 
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-        
-            const objectStore = db.createObjectStore(osName, { autoIncrement: true });
-        };
-    }
-    openDB()
+    request.onerror = (event) => {
+        displayMessage(`Database error: ${event.target.errorCode}`), 'danger';
+    };
+    request.onsuccess = (event) => {
+        db = event.target.result;
+        displayList()
+    };
+
+    request.onupgradeneeded = (event) => {
+        db = event.target.result;   
+        db.createObjectStore(osName, { autoIncrement: true });
+    };
 }
 
 newItem.addEventListener('input', () => {
@@ -208,7 +202,6 @@ async function deleteItem(e) {
             const id = item.getAttribute('data-id')
             removeItem(id)
                 .then( result => {
-                    console.log(result)
                     displayMessage(`Item ${value} removed.`, 'danger')
                     if (list.children.length === 0) {
                         itemContainer.classList.remove('show-groceries')
@@ -217,9 +210,6 @@ async function deleteItem(e) {
                 .catch(error => {
                     displayMessage(error, 'danger')
                 })
-        }
-        else {
-
         }
     }
     catch(error) {
