@@ -29,10 +29,6 @@ function displayList() {
             const article = createArticle(cursor.value, cursor.key)
             list.appendChild(article)
             cursor.continue();
-            // const delButton = article.querySelector('.btn-delete')
-            // const editButton = article.querySelector('.btn-edit')
-            // delButton.onclick = deleteItem
-            // editButton.onclick = editItem
         } else {
             console.log("No more entries!");
             if (list.children.length > 0) {
@@ -100,16 +96,12 @@ function updateItem(id, newValue) {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([osName], "readwrite");
         const objectStore = transaction.objectStore(osName);
-        const request = objectStore.get(id);
+        const request = objectStore.get(parseInt(id));
         request.onerror = (event) => {
             reject(event.target.error.message)
         };
         request.onsuccess = (event) => {
-            // Get the old value that we want to update
-            let data = event.target.result;
-            data = newValue;
-            // Put this updated object back into the database.
-            const requestUpdate = objectStore.put(data);
+            const requestUpdate = objectStore.put(newValue, parseInt(id));
             requestUpdate.onerror = (event) => {
                 reject(event.target.error.message)
             };
@@ -138,7 +130,6 @@ function removeItem(key) {
 function addItem(e) {
     e.preventDefault()
     const value = newItem.value
-    // let dict = JSON.parse(localStorage.getItem(appKeyName))
     if (editing) {
         const id = elementEditing.getAttribute('data-id')
         const pElement = elementEditing.querySelector('p')
@@ -164,10 +155,6 @@ function addItem(e) {
             .then( key => {
                 const article = createArticle(value, key)
                 list.appendChild(article)
-                // const delButton = article.querySelector('.btn-delete')
-                // const editButton = article.querySelector('.btn-edit')
-                // delButton.onclick = deleteItem
-                // editButton.onclick = editItem
                 displayMessage(`${value} successfully added to the list`, 'success')
                 if (list.children.length > 0) {
                     itemContainer.classList.add('show-groceries')
@@ -310,7 +297,6 @@ async function clear() {
     try {
         const choice = await showModal('Are you sure you want to delete all items?')
         if (choice){
-            //localStorage.setItem(appKeyName, JSON.stringify({}))
             list.innerHTML = ''
             displayMessage('All items removed from list.', 'danger')
             itemContainer.classList.remove('show-groceries')
