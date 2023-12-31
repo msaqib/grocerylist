@@ -121,6 +121,21 @@ function removeItem(key) {
     })
 }
 
+function clearStore(key) {
+    return new Promise ( (resolve, reject) => {
+        const request = db
+        .transaction([osName], "readwrite")
+        .objectStore(osName)
+        .clear();
+        request.onsuccess = (event) => {
+            resolve('All items deleted')
+        };
+        request.onerror = (event) => {
+            reject(event.target.error.message)
+        }
+    })
+}
+
 function addItem(e) {
     e.preventDefault()
     const value = newItem.value
@@ -287,12 +302,15 @@ async function clear() {
     try {
         const choice = await showModal('Are you sure you want to delete all items?')
         if (choice){
-            list.innerHTML = ''
-            displayMessage('All items removed from list.', 'danger')
-            itemContainer.classList.remove('show-groceries')
-        }
-        else {
-
+            clearStore()
+                .then( result => {
+                    list.innerHTML = ''
+                    displayMessage('All items removed from list.', 'danger')
+                    itemContainer.classList.remove('show-groceries')
+                }) 
+                .catch( error => {
+                    displayMessage(error, 'danger')
+                })
         }
     }
     catch(error) {
